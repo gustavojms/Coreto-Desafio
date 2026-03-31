@@ -22,6 +22,7 @@
     {
       "name": "Autenticacao",
       "description": "Registro e login de usuarios. Todos os endpoints protegidos exigem o token JWT retornado aqui.",
+      "auth": { "type": "noauth" },
       "item": [
         {
           "name": "Login Admin (seed)",
