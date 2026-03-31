@@ -4,13 +4,10 @@ WORKDIR /app
 
 COPY .mvn/settings.xml /root/.m2/settings.xml
 COPY pom.xml ./
-
-RUN --mount=type=cache,target=/root/.m2/repository \
-    mvn dependency:resolve
+RUN mvn dependency:resolve
 
 COPY src ./src
-RUN --mount=type=cache,target=/root/.m2/repository \
-    mvn package -DskipTests -q
+RUN mvn package -DskipTests -q
 
 FROM eclipse-temurin:21-jre-alpine
 
