@@ -21,7 +21,6 @@ ENV RSA_PRIVATE_KEY=file:/app/certs/private.pem
 
 EXPOSE 8080
 
-COPY entrypoint.sh /app/entrypoint.sh
-RUN chmod +x /app/entrypoint.sh
+RUN printf '#!/bin/sh\necho "=== DB: DATABASE_URL=$DATABASE_URL PGHOST=$PGHOST ==="\nif [ -n "$DATABASE_URL" ]; then\n  export SPRING_DATASOURCE_URL="jdbc:${DATABASE_URL}"\nfi\nif [ -n "$PGUSER" ]; then\n  export SPRING_DATASOURCE_USERNAME="${PGUSER}"\nfi\nif [ -n "$PGPASSWORD" ]; then\n  export SPRING_DATASOURCE_PASSWORD="${PGPASSWORD}"\nfi\nexec java -jar app.jar\n' > /app/start.sh && chmod +x /app/start.sh
 
-ENTRYPOINT ["/app/entrypoint.sh"]
+ENTRYPOINT ["/app/start.sh"]
