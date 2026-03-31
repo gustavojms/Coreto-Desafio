@@ -21,4 +21,4 @@ ENV RSA_PRIVATE_KEY=file:/app/certs/private.pem
 
 EXPOSE 8080
 
-ENTRYPOINT ["sh", "-c", "echo \"Connecting to DB: jdbc:postgresql://${PGHOST}:${PGPORT}/${PGDATABASE}\" && java -jar app.jar"]
+ENTRYPOINT ["sh", "-c", "export SPRING_DATASOURCE_URL=\"jdbc:${DATABASE_URL}\" && java -jar app.jar"]
