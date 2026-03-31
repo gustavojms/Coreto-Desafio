@@ -16,10 +16,9 @@ WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
 COPY src/main/resources/certs/ /app/certs/
 
-ENV SPRING_PROFILES_ACTIVE=prod
 ENV RSA_PUBLIC_KEY=file:/app/certs/public.pem
 ENV RSA_PRIVATE_KEY=file:/app/certs/private.pem
 
 EXPOSE 8080
 
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["sh", "-c", "echo \"Connecting to DB: jdbc:postgresql://${PGHOST}:${PGPORT}/${PGDATABASE}\" && java -jar app.jar"]
