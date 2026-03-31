@@ -34,7 +34,7 @@ class AuthControllerTest {
 
     @Test
     void shouldRegisterUser() throws Exception {
-        TokenResponse token = new TokenResponse("jwt-token", "ORGANIZADOR", "user-id");
+        TokenResponse token = new TokenResponse("jwt-token", "ORGANIZADOR");
         when(authService.register(any(RegisterRequest.class))).thenReturn(token);
 
         String body = """
@@ -62,7 +62,7 @@ class AuthControllerTest {
 
     @Test
     void shouldLogin() throws Exception {
-        TokenResponse token = new TokenResponse("jwt-token", "ADMIN", "admin-id");
+        TokenResponse token = new TokenResponse("jwt-token", "ADMIN");
         when(authService.login(any(LoginRequest.class))).thenReturn(token);
 
         String body = """

@@ -26,7 +26,7 @@
       "item": [
         {
           "name": "Login Admin (seed)",
-          "event": [{ "listen": "test", "script": { "exec": ["var json = pm.response.json();", "pm.collectionVariables.set('adminToken', json.token);", "pm.collectionVariables.set('token', json.token);", "pm.collectionVariables.set('userId', json.userId);", "pm.test('Status 200', () => pm.response.to.have.status(200));", "pm.test('Possui token', () => pm.expect(json.token).to.be.a('string'));", "pm.test('Role e ADMIN', () => pm.expect(json.role).to.equal('ADMIN'));"] } }],
+          "event": [{ "listen": "test", "script": { "exec": ["var json = pm.response.json();", "pm.collectionVariables.set('adminToken', json.token);", "pm.collectionVariables.set('token', json.token);", "pm.test('Status 200', () => pm.response.to.have.status(200));", "pm.test('Possui token', () => pm.expect(json.token).to.be.a('string'));", "pm.test('Role e ADMIN', () => pm.expect(json.role).to.equal('ADMIN'));"] } }],
           "request": {
             "method": "POST",
             "url": "{{baseUrl}}/api/v1/auth/login",
@@ -36,7 +36,7 @@
         },
         {
           "name": "Registrar novo usuario",
-          "event": [{ "listen": "test", "script": { "exec": ["var json = pm.response.json();", "pm.test('Status 201', () => pm.response.to.have.status(201));", "pm.test('Possui token', () => pm.expect(json.token).to.be.a('string'));", "pm.test('Possui userId', () => pm.expect(json.userId).to.be.a('string'));"] } }],
+          "event": [{ "listen": "test", "script": { "exec": ["var json = pm.response.json();", "pm.test('Status 201', () => pm.response.to.have.status(201));", "pm.test('Possui token', () => pm.expect(json.token).to.be.a('string'));"] } }],
           "request": {
             "method": "POST",
             "url": "{{baseUrl}}/api/v1/auth/register",

@@ -45,7 +45,7 @@ public class AuthService {
         log.info("action=register_success userId={} email={} role={}", usuario.getId(), usuario.getEmail(), usuario.getRole());
 
         String token = jwtTokenService.generateToken(usuario);
-        return new TokenResponse(token, usuario.getRole().name(), usuario.getId().toString());
+        return new TokenResponse(token, usuario.getRole().name());
     }
 
     public TokenResponse login(LoginRequest request) {
@@ -69,6 +69,6 @@ public class AuthService {
 
         log.info("action=login_success userId={} email={} role={}", usuario.getId(), usuario.getEmail(), usuario.getRole());
         String token = jwtTokenService.generateToken(usuario);
-        return new TokenResponse(token, usuario.getRole().name(), usuario.getId().toString());
+        return new TokenResponse(token, usuario.getRole().name());
     }
 }
