@@ -6,6 +6,8 @@ import br.com.coreto.application.dto.response.TokenResponse;
 import br.com.coreto.domain.entity.Usuario;
 import br.com.coreto.infrastructure.persistence.repository.UsuarioRepository;
 import br.com.coreto.infrastructure.security.JwtTokenService;
+import br.com.coreto.domain.enums.Role;
+import br.com.coreto.infrastructure.security.RateLimiter;
 import br.com.coreto.web.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,10 +26,16 @@ public class AuthService {
     private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenService jwtTokenService;
+    private final RateLimiter rateLimiter;
 
     @Transactional
     public TokenResponse register(RegisterRequest request) {
         log.info("action=register_attempt email={} role={}", request.getEmail(), request.getRole());
+
+        if (request.getRole() == Role.ADMIN) {
+            log.warn("action=register_failed reason=admin_role_not_allowed email={}", request.getEmail());
+            throw new BusinessException("Registro como ADMIN nao e permitido");
+        }
 
         if (usuarioRepository.existsByEmail(request.getEmail())) {
             log.warn("action=register_failed reason=email_already_exists email={}", request.getEmail());
@@ -51,13 +59,20 @@ public class AuthService {
     public TokenResponse login(LoginRequest request) {
         log.info("action=login_attempt email={}", request.getEmail());
 
+        if (rateLimiter.isBlocked(request.getEmail())) {
+            log.warn("action=login_blocked reason=rate_limit email={}", request.getEmail());
+            throw new BusinessException("Muitas tentativas de login. Tente novamente em 5 minutos");
+        }
+
         Usuario usuario = usuarioRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> {
+                    rateLimiter.recordFailedAttempt(request.getEmail());
                     log.warn("action=login_failed reason=user_not_found email={}", request.getEmail());
                     return new BusinessException("Credenciais invalidas");
                 });
 
         if (!passwordEncoder.matches(request.getSenha(), usuario.getSenhaHash())) {
+            rateLimiter.recordFailedAttempt(request.getEmail());
             log.warn("action=login_failed reason=invalid_password email={} userId={}", request.getEmail(), usuario.getId());
             throw new BusinessException("Credenciais invalidas");
         }
@@ -67,6 +82,7 @@ public class AuthService {
             throw new BusinessException("Usuario desativado");
         }
 
+        rateLimiter.resetAttempts(request.getEmail());
         log.info("action=login_success userId={} email={} role={}", usuario.getId(), usuario.getEmail(), usuario.getRole());
         String token = jwtTokenService.generateToken(usuario);
         return new TokenResponse(token, usuario.getRole().name());

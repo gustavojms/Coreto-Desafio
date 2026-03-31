@@ -4,11 +4,14 @@ import br.com.coreto.application.dto.response.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.time.Instant;
 import java.util.HashMap;
@@ -67,6 +70,66 @@ public class GlobalExceptionHandler {
         return new ErrorResponse(
                 Instant.now(), 422, "Erro de negocio",
                 ex.getMessage(), request.getRequestURI(), null
+        );
+    }
+
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    @ResponseStatus(HttpStatus.METHOD_NOT_ALLOWED)
+    public ErrorResponse handleMethodNotAllowed(HttpRequestMethodNotSupportedException ex, HttpServletRequest request) {
+        log.warn("action=method_not_allowed path={} method={}", request.getRequestURI(), request.getMethod());
+
+        return new ErrorResponse(
+                Instant.now(), 405, "Metodo nao permitido",
+                "O metodo " + request.getMethod() + " nao e suportado para este recurso",
+                request.getRequestURI(), null
+        );
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleTypeMismatch(MethodArgumentTypeMismatchException ex, HttpServletRequest request) {
+        log.warn("action=type_mismatch path={} param={} value={}", request.getRequestURI(), ex.getName(), ex.getValue());
+
+        return new ErrorResponse(
+                Instant.now(), 400, "Parametro invalido",
+                "Valor invalido para o parametro: " + ex.getName(),
+                request.getRequestURI(), null
+        );
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleUnreadable(HttpMessageNotReadableException ex, HttpServletRequest request) {
+        log.warn("action=unreadable_body path={}", request.getRequestURI());
+
+        return new ErrorResponse(
+                Instant.now(), 400, "Requisicao invalida",
+                "O corpo da requisicao e invalido ou mal formatado",
+                request.getRequestURI(), null
+        );
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleIllegalArgument(IllegalArgumentException ex, HttpServletRequest request) {
+        log.warn("action=illegal_argument path={} message={}", request.getRequestURI(), ex.getMessage());
+
+        return new ErrorResponse(
+                Instant.now(), 400, "Argumento invalido",
+                "Parametro invalido na requisicao",
+                request.getRequestURI(), null
+        );
+    }
+
+    @ExceptionHandler(org.springframework.data.mapping.PropertyReferenceException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handlePropertyReference(org.springframework.data.mapping.PropertyReferenceException ex, HttpServletRequest request) {
+        log.warn("action=invalid_sort path={} property={}", request.getRequestURI(), ex.getPropertyName());
+
+        return new ErrorResponse(
+                Instant.now(), 400, "Parametro de ordenacao invalido",
+                "Campo de ordenacao invalido: " + ex.getPropertyName(),
+                request.getRequestURI(), null
         );
     }
 
