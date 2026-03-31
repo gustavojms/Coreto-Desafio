@@ -2,7 +2,7 @@ spring:
   application:
     name: coreto-api
   profiles:
-    active: ${SPRING_PROFILES_ACTIVE:dev}
+    active: ${SPRING_PROFILES_ACTIVE:}
   datasource:
     url: jdbc:postgresql://${PGHOST:localhost}:${PGPORT:5432}/${PGDATABASE:coreto}
     username: ${PGUSER:coreto}

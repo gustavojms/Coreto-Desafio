@@ -1,8 +1,4 @@
 spring:
-  datasource:
-    url: jdbc:postgresql://${PGHOST:localhost}:${PGPORT:5432}/${PGDATABASE:coreto}
-    username: ${PGUSER:coreto}
-    password: ${PGPASSWORD:coreto123}
   jpa:
     hibernate:
       ddl-auto: validate
