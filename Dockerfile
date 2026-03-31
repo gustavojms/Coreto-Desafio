@@ -21,4 +21,7 @@ ENV RSA_PRIVATE_KEY=file:/app/certs/private.pem
 
 EXPOSE 8080
 
-ENTRYPOINT ["sh", "-c", "export SPRING_DATASOURCE_URL=\"jdbc:${DATABASE_URL}\" && java -jar app.jar"]
+COPY entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
+
+ENTRYPOINT ["/app/entrypoint.sh"]
