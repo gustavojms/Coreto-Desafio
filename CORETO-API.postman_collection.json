@@ -1,0 +1,221 @@
+{
+  "info": {
+    "name": "CORETO 2.0 API",
+    "description": "Colecao completa da API CORETO 2.0 - Ecossistema de Inovacao do Recife",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080" },
+    { "key": "token", "value": "" },
+    { "key": "adminToken", "value": "" },
+    { "key": "organizadorId", "value": "" },
+    { "key": "oportunidadeId", "value": "" },
+    { "key": "resolvedorId", "value": "" },
+    { "key": "talentoId", "value": "" },
+    { "key": "userId", "value": "" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{token}}" }]
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register ADMIN",
+          "event": [{ "listen": "test", "script": { "exec": ["var json = pm.response.json();", "pm.collectionVariables.set('adminToken', json.token);", "pm.collectionVariables.set('token', json.token);", "pm.collectionVariables.set('userId', json.userId);", "pm.test('Status 201', () => pm.response.to.have.status(201));", "pm.test('Has token', () => pm.expect(json.token).to.be.a('string'));"] } }],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/v1/auth/register",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"nome\": \"Admin Coreto\",\n  \"email\": \"admin@test.com\",\n  \"senha\": \"admin123\",\n  \"role\": \"ADMIN\"\n}" }
+          }
+        },
+        {
+          "name": "Register ORGANIZADOR",
+          "event": [{ "listen": "test", "script": { "exec": ["var json = pm.response.json();", "pm.collectionVariables.set('token', json.token);", "pm.test('Status 201', () => pm.response.to.have.status(201));"] } }],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/v1/auth/register",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"nome\": \"Maria Organizadora\",\n  \"email\": \"maria@emprel.com\",\n  \"senha\": \"123456\",\n  \"role\": \"ORGANIZADOR\"\n}" }
+          }
+        },
+        {
+          "name": "Login ADMIN",
+          "event": [{ "listen": "test", "script": { "exec": ["var json = pm.response.json();", "pm.collectionVariables.set('adminToken', json.token);", "pm.collectionVariables.set('token', json.token);", "pm.test('Status 200', () => pm.response.to.have.status(200));", "pm.test('Has token', () => pm.expect(json.token).to.be.a('string'));"] } }],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/v1/auth/login",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"admin@test.com\",\n  \"senha\": \"admin123\"\n}" }
+          }
+        },
+        {
+          "name": "Validation - Invalid Email",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 400', () => pm.response.to.have.status(400));", "pm.test('Has fieldErrors', () => pm.expect(pm.response.json().fieldErrors).to.have.property('email'));"] } }],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/v1/auth/register",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"nome\": \"Test\",\n  \"email\": \"not-an-email\",\n  \"senha\": \"123456\",\n  \"role\": \"TALENTO\"\n}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Organizadores",
+      "item": [
+        {
+          "name": "Create Organizador",
+          "event": [{ "listen": "test", "script": { "exec": ["var json = pm.response.json();", "pm.collectionVariables.set('organizadorId', json.id);", "pm.test('Status 201', () => pm.response.to.have.status(201));", "pm.test('Has tags', () => pm.expect(json.tags).to.be.an('array').that.is.not.empty);", "pm.test('Has audit fields', () => { pm.expect(json.createdAt).to.be.a('string'); pm.expect(json.createdBy).to.be.a('string'); });"] } }],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/v1/organizadores",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"tipoOrganizacao\": \"GOVERNO\",\n  \"nome\": \"Prefeitura do Recife - SECTI\",\n  \"descricao\": \"Secretaria de Ciencia e Tecnologia\",\n  \"cnpj\": \"11222333000181\",\n  \"usuariosResponsaveis\": [\"{{userId}}\"],\n  \"logoUrl\": \"https://recife.pe.gov.br/logo.png\",\n  \"bannerUrl\": \"https://recife.pe.gov.br/banner.png\",\n  \"publicoAlvo\": [\"STARTUPS\", \"PESQUISADORES\"],\n  \"territorioPais\": \"Brasil\",\n  \"territorioEstado\": \"PE\",\n  \"territorioMunicipio\": \"Recife\",\n  \"areaTematica\": [\"TECNOLOGIA\", \"EDUCACAO\"],\n  \"estagioInovacao\": \"ESTAGIO_4\",\n  \"oQueBusca\": [\"TECNOLOGIA\", \"MENTORIA\"],\n  \"parceiroDesejado\": \"UNIVERSIDADE\"\n}" }
+          }
+        },
+        {
+          "name": "Get Organizador by ID",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 200', () => pm.response.to.have.status(200));", "pm.test('Correct ID', () => pm.expect(pm.response.json().id).to.equal(pm.collectionVariables.get('organizadorId')));"] } }],
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/organizadores/{{organizadorId}}", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }] }
+        },
+        {
+          "name": "List Organizadores (paginated)",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 200', () => pm.response.to.have.status(200));", "pm.test('Has pagination', () => { var json = pm.response.json(); pm.expect(json.totalElements).to.be.a('number'); pm.expect(json.content).to.be.an('array'); });"] } }],
+          "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/v1/organizadores?page=0&size=10&sort=createdAt,desc", "host": ["{{baseUrl}}"], "path": ["api", "v1", "organizadores"], "query": [{ "key": "page", "value": "0" }, { "key": "size", "value": "10" }, { "key": "sort", "value": "createdAt,desc" }] }, "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }] }
+        },
+        {
+          "name": "Filter by TAG",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 200', () => pm.response.to.have.status(200));"] } }],
+          "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/v1/organizadores?tag=tecnologia", "host": ["{{baseUrl}}"], "path": ["api", "v1", "organizadores"], "query": [{ "key": "tag", "value": "tecnologia" }] }, "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }] }
+        },
+        {
+          "name": "Filter by search text",
+          "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/v1/organizadores?search=recife", "host": ["{{baseUrl}}"], "path": ["api", "v1", "organizadores"], "query": [{ "key": "search", "value": "recife" }] }, "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }] }
+        },
+        {
+          "name": "Filter by estado",
+          "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/v1/organizadores?estado=PE", "host": ["{{baseUrl}}"], "path": ["api", "v1", "organizadores"], "query": [{ "key": "estado", "value": "PE" }] }, "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }] }
+        },
+        {
+          "name": "Update Organizador",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 200', () => pm.response.to.have.status(200));"] } }],
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/api/v1/organizadores/{{organizadorId}}",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"tipoOrganizacao\": \"GOVERNO\",\n  \"nome\": \"Prefeitura do Recife - SECTI (atualizado)\",\n  \"descricao\": \"Secretaria atualizada\",\n  \"cnpj\": \"11222333000181\",\n  \"usuariosResponsaveis\": [\"{{userId}}\"],\n  \"logoUrl\": \"https://recife.pe.gov.br/logo.png\",\n  \"bannerUrl\": \"https://recife.pe.gov.br/banner.png\",\n  \"areaTematica\": [\"TECNOLOGIA\", \"GOVERNO_DIGITAL\"],\n  \"estagioInovacao\": \"ESTAGIO_5\",\n  \"oQueBusca\": [\"FINANCEIRO\"],\n  \"parceiroDesejado\": \"EMPRESA\"\n}" }
+          }
+        },
+        {
+          "name": "Soft Delete Organizador",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 204', () => pm.response.to.have.status(204));"] } }],
+          "request": { "method": "DELETE", "url": "{{baseUrl}}/api/v1/organizadores/{{organizadorId}}", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }] }
+        },
+        {
+          "name": "Get Deleted (expect 404)",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 404', () => pm.response.to.have.status(404));"] } }],
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/organizadores/{{organizadorId}}", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }] }
+        }
+      ]
+    },
+    {
+      "name": "Oportunidades",
+      "item": [
+        {
+          "name": "Create Oportunidade",
+          "event": [{ "listen": "test", "script": { "exec": ["var json = pm.response.json();", "pm.collectionVariables.set('oportunidadeId', json.id);", "pm.test('Status 201', () => pm.response.to.have.status(201));", "pm.test('Has tags', () => pm.expect(json.tags).to.be.an('array').that.is.not.empty);", "pm.test('Status is RASCUNHO', () => pm.expect(json.status).to.equal('RASCUNHO'));"] } }],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/v1/oportunidades",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"titulo\": \"Edital de Inovacao Recife 2026\",\n  \"tipoOportunidade\": \"EDITAL\",\n  \"resumo\": \"Selecao de projetos inovadores para desafios urbanos.\",\n  \"dataAbertura\": \"2026-04-01\",\n  \"dataLimiteInscricao\": \"2026-05-31\",\n  \"organizadorId\": \"{{organizadorId}}\",\n  \"tipoOrganizador\": \"GOVERNO\",\n  \"possuiParceria\": true,\n  \"parceiros\": [{\"nome\": \"UFPE\", \"tipo\": \"Universidade\"}],\n  \"areasTematicas\": [\"TECNOLOGIA\", \"SAUDE\"],\n  \"apoioOferecido\": [\"FINANCEIRO\", \"MENTORIA\"]\n}" }
+          }
+        },
+        {
+          "name": "Get Oportunidade by ID",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 200', () => pm.response.to.have.status(200));"] } }],
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/oportunidades/{{oportunidadeId}}", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }] }
+        },
+        {
+          "name": "List with filters",
+          "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/v1/oportunidades?tipo=EDITAL&tag=tecnologia&page=0&size=10", "host": ["{{baseUrl}}"], "path": ["api", "v1", "oportunidades"], "query": [{ "key": "tipo", "value": "EDITAL" }, { "key": "tag", "value": "tecnologia" }, { "key": "page", "value": "0" }, { "key": "size", "value": "10" }] }, "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }] }
+        },
+        {
+          "name": "Soft Delete Oportunidade",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 204', () => pm.response.to.have.status(204));"] } }],
+          "request": { "method": "DELETE", "url": "{{baseUrl}}/api/v1/oportunidades/{{oportunidadeId}}", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }] }
+        }
+      ]
+    },
+    {
+      "name": "Resolvedores",
+      "item": [
+        {
+          "name": "Create Resolvedor",
+          "event": [{ "listen": "test", "script": { "exec": ["var json = pm.response.json();", "pm.collectionVariables.set('resolvedorId', json.id);", "pm.test('Status 201', () => pm.response.to.have.status(201));", "pm.test('Has tags', () => pm.expect(json.tags).to.be.an('array').that.is.not.empty);"] } }],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/v1/resolvedores",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"tipoIniciativa\": \"STARTUP\",\n  \"nome\": \"HealthTech Recife\",\n  \"possuiVinculo\": true,\n  \"vinculoDetalhes\": \"Incubada no Porto Digital\",\n  \"nomeResponsavel\": \"Carlos Silva\",\n  \"papel\": \"CEO\",\n  \"email\": \"carlos@healthtech.io\",\n  \"telefoneWhatsapp\": \"81999001122\",\n  \"dedicacao\": \"INTEGRAL\",\n  \"descricaoCurta\": \"Plataforma de telemedicina\",\n  \"problema\": \"Acesso limitado a consultas medicas.\",\n  \"solucao\": \"App de telemedicina com IA.\",\n  \"publicoAlvo\": [\"GOVERNO\"],\n  \"areaTematica\": [\"SAUDE\", \"TECNOLOGIA\"],\n  \"trlGrupo\": \"TRL_5\",\n  \"estagioNegocio\": \"VALIDACAO\",\n  \"apoioBuscado\": [\"FINANCEIRO\", \"MENTORIA\"],\n  \"parceiroDesejado\": \"GOVERNO\"\n}" }
+          }
+        },
+        {
+          "name": "Get Resolvedor by ID",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/resolvedores/{{resolvedorId}}", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }] }
+        },
+        {
+          "name": "List Resolvedores",
+          "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/v1/resolvedores?tipoIniciativa=STARTUP&page=0&size=10", "host": ["{{baseUrl}}"], "path": ["api", "v1", "resolvedores"], "query": [{ "key": "tipoIniciativa", "value": "STARTUP" }, { "key": "page", "value": "0" }, { "key": "size", "value": "10" }] }, "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }] }
+        },
+        {
+          "name": "Soft Delete Resolvedor",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 204', () => pm.response.to.have.status(204));"] } }],
+          "request": { "method": "DELETE", "url": "{{baseUrl}}/api/v1/resolvedores/{{resolvedorId}}", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }] }
+        }
+      ]
+    },
+    {
+      "name": "Talentos",
+      "item": [
+        {
+          "name": "Create Talento",
+          "event": [{ "listen": "test", "script": { "exec": ["var json = pm.response.json();", "pm.collectionVariables.set('talentoId', json.id);", "pm.test('Status 201', () => pm.response.to.have.status(201));", "pm.test('Has tags', () => pm.expect(json.tags).to.be.an('array').that.is.not.empty);"] } }],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/v1/talentos",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"nomeCompleto\": \"Ana Carolina Souza\",\n  \"email\": \"ana@dev.com\",\n  \"telefoneWhatsapp\": \"81997654321\",\n  \"miniBio\": \"Desenvolvedora backend senior com Java e Spring Boot.\",\n  \"pais\": \"Brasil\",\n  \"estado\": \"PE\",\n  \"cidade\": \"Recife\",\n  \"skills\": [\"Java\", \"Spring Boot\", \"PostgreSQL\"],\n  \"senioridade\": \"SENIOR\",\n  \"areasTematicas\": [\"TECNOLOGIA\"],\n  \"horasSemana\": 20,\n  \"tipoAtuacao\": \"PJ\",\n  \"formato\": \"REMOTO\"\n}" }
+          }
+        },
+        {
+          "name": "Get Talento by ID",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/talentos/{{talentoId}}", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }] }
+        },
+        {
+          "name": "List Talentos with filters",
+          "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/v1/talentos?senioridade=SENIOR&estado=PE&formato=REMOTO", "host": ["{{baseUrl}}"], "path": ["api", "v1", "talentos"], "query": [{ "key": "senioridade", "value": "SENIOR" }, { "key": "estado", "value": "PE" }, { "key": "formato", "value": "REMOTO" }] }, "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }] }
+        },
+        {
+          "name": "Soft Delete Talento",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 204', () => pm.response.to.have.status(204));"] } }],
+          "request": { "method": "DELETE", "url": "{{baseUrl}}/api/v1/talentos/{{talentoId}}", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }] }
+        }
+      ]
+    },
+    {
+      "name": "Security",
+      "item": [
+        {
+          "name": "No Token (expect 401)",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 401', () => pm.response.to.have.status(401));"] } }],
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/talentos" }
+        }
+      ]
+    }
+  ]
+}
