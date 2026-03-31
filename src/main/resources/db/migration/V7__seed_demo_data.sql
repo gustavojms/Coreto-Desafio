@@ -1,16 +1,16 @@
 -- =============================================
 -- SEED: Demo users (all passwords: "123456")
--- BCrypt hash: $2a$12$L2CbOflPyrNmDuoMweBI6ODSX.ZAdI6Ozy6TdbbcmOcPPYfUt/CSW
+-- BCrypt hash: $2a$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi
 -- =============================================
 
 INSERT INTO usuarios (id, nome, email, senha_hash, role) VALUES
-('b0000000-0000-0000-0000-000000000001', 'Maria Organizadora', 'maria@emprel.com', '$2a$12$L2CbOflPyrNmDuoMweBI6ODSX.ZAdI6Ozy6TdbbcmOcPPYfUt/CSW', 'ORGANIZADOR'),
-('c0000000-0000-0000-0000-000000000001', 'Carlos Startup', 'carlos@startup.io', '$2a$12$L2CbOflPyrNmDuoMweBI6ODSX.ZAdI6Ozy6TdbbcmOcPPYfUt/CSW', 'RESOLVEDOR'),
-('d0000000-0000-0000-0000-000000000001', 'Ana Desenvolvedora', 'ana@dev.com', '$2a$12$L2CbOflPyrNmDuoMweBI6ODSX.ZAdI6Ozy6TdbbcmOcPPYfUt/CSW', 'TALENTO'),
-('b0000000-0000-0000-0000-000000000002', 'Joao Porto Digital', 'joao@portodigital.org', '$2a$12$L2CbOflPyrNmDuoMweBI6ODSX.ZAdI6Ozy6TdbbcmOcPPYfUt/CSW', 'ORGANIZADOR'),
-('c0000000-0000-0000-0000-000000000002', 'Fernanda Lab UFPE', 'fernanda@ufpe.br', '$2a$12$L2CbOflPyrNmDuoMweBI6ODSX.ZAdI6Ozy6TdbbcmOcPPYfUt/CSW', 'RESOLVEDOR'),
-('d0000000-0000-0000-0000-000000000002', 'Pedro Designer', 'pedro@design.com', '$2a$12$L2CbOflPyrNmDuoMweBI6ODSX.ZAdI6Ozy6TdbbcmOcPPYfUt/CSW', 'TALENTO'),
-('d0000000-0000-0000-0000-000000000003', 'Julia Data Scientist', 'julia@data.com', '$2a$12$L2CbOflPyrNmDuoMweBI6ODSX.ZAdI6Ozy6TdbbcmOcPPYfUt/CSW', 'TALENTO');
+('b0000000-0000-0000-0000-000000000001', 'Maria Organizadora', 'maria@emprel.com', '$2a$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'ORGANIZADOR'),
+('c0000000-0000-0000-0000-000000000001', 'Carlos Startup', 'carlos@startup.io', '$2a$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'RESOLVEDOR'),
+('d0000000-0000-0000-0000-000000000001', 'Ana Desenvolvedora', 'ana@dev.com', '$2a$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'TALENTO'),
+('b0000000-0000-0000-0000-000000000002', 'Joao Porto Digital', 'joao@portodigital.org', '$2a$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'ORGANIZADOR'),
+('c0000000-0000-0000-0000-000000000002', 'Fernanda Lab UFPE', 'fernanda@ufpe.br', '$2a$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'RESOLVEDOR'),
+('d0000000-0000-0000-0000-000000000002', 'Pedro Designer', 'pedro@design.com', '$2a$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'TALENTO'),
+('d0000000-0000-0000-0000-000000000003', 'Julia Data Scientist', 'julia@data.com', '$2a$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'TALENTO');
 
 -- =============================================
 -- SEED: Organizadores
