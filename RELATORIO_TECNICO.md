@@ -2,155 +2,93 @@
 
 ## 1. Problema Abordado
 
-A plataforma CORETO 2.0 necessita de um backend robusto para gerenciar o ecossistema de inovacao da cidade do Recife, conectando quatro atores principais: Talentos (individuos), Resolvedores (startups/labs), Organizadores (instituicoes) e Oportunidades (editais/desafios/programas). O desafio e implementar um CRUD completo, seguro e validado dessas entidades, com normalizacao de dados via TAGs automaticas e APIs prontas para integracao com o modulo de Matching Maker.
+O ecossistema de inovacao do Recife envolve atores diversos — instituicoes, startups, laboratorios e profissionais — que operam de forma fragmentada. Oportunidades (editais, desafios, programas) sao divulgadas em canais dispersos, dificultando o acesso. Organizadores nao tem visibilidade sobre quais resolvedores ou talentos possuem perfil adequado para suas demandas, e a correspondencia e feita manualmente. Alem disso, as informacoes nao estao padronizadas entre instituicoes, impedindo cruzamento de dados e analises do ecossistema.
+
+A plataforma CORETO 2.0 resolve esses problemas centralizando o cadastro e classificacao de quatro atores: **Organizadores** (instituicoes), **Oportunidades** (editais/desafios/programas), **Resolvedores** (startups/laboratorios) e **Talentos** (profissionais). A API oferece CRUD completo com seguranca, validacao e TAGs normalizadas que preparam os dados para um futuro modulo de Matching Maker.
+
+---
 
 ## 2. Solucao Proposta
 
-### 2.1 Stack Tecnologica
+### 2.1 Stack e Arquitetura
 
-| Componente | Tecnologia | Justificativa |
-|------------|-----------|---------------|
-| Linguagem | Java 21 (LTS) | Estabilidade, performance, ecossistema maduro |
-| Framework | Spring Boot 3.4.x | Convencao sobre configuracao, produtividade |
-| ORM | Spring Data JPA + Hibernate 6 | Mapeamento objeto-relacional robusto |
-| Banco de Dados | PostgreSQL 17 | JSONB nativo, arrays, performance comprovada |
-| Migracoes | Flyway | Versionamento de schema, rollback seguro |
-| Seguranca | Spring Security + JWT (RSA) | Autenticacao stateless, padrao OAuth2 Resource Server |
-| Documentacao | SpringDoc OpenAPI 3 | Swagger UI integrado com autenticacao JWT |
-| Mapeamento | MapStruct | Geracao de codigo em compile-time, zero overhead |
-| Testes | JUnit 5 + Mockito + Spring Test | Cobertura unitaria e de integracao |
-| Container | Docker + Docker Compose | Deploy padronizado e reprodutivel |
+| Componente | Tecnologia |
+|------------|-----------|
+| Linguagem / Framework | Java 21 + Spring Boot 3.4.4 |
+| Banco de Dados / Migracoes | PostgreSQL 17 + Flyway |
+| Seguranca | Spring Security + JWT (RSA) + OAuth2 Resource Server |
+| Mapeamento / Docs | MapStruct 1.6 + SpringDoc OpenAPI 3 |
+| Testes | JUnit 5 + Mockito + Testcontainers |
+| Container | Docker + Docker Compose (profiles dev/prod) |
 
-### 2.2 Arquitetura (Clean Architecture)
+O projeto segue **Clean Architecture** em quatro camadas: `domain` (entidades e enums), `application` (DTOs, services, validacoes), `infrastructure` (seguranca, persistencia, config) e `web` (controllers, tratamento de erros). DTOs sao separados de entidades para controlar exposicao de dados. MapStruct gera mapeadores em compile-time sem reflexao.
 
-```
-domain/           Entidades JPA e Enums (nucleo do negocio)
-application/      DTOs, Mappers, Services, Validations (casos de uso)
-infrastructure/   Config, Persistence, Security (frameworks)
-web/              Controllers, Exception Handlers (apresentacao)
-```
+### 2.2 Modelo de Dados
 
-**Justificativa:** A separacao em camadas garante que o dominio do negocio nao depende de frameworks. DTOs sao separados de Entities para controlar exposicao de dados na API. MapStruct gera os mappers em tempo de compilacao sem reflexao.
+As quatro entidades compartilham UUID como PK, soft delete (`deleted`, `deleted_at`), auditoria (`created_at`, `updated_at`, `created_by`) e TAGs derivadas automaticamente:
 
-## 3. Decisoes Arquiteturais
+| Entidade | Descricao | Campos Chave |
+|----------|-----------|-------------|
+| Organizador | Instituicao (governo, empresa, universidade) | CNPJ, tipo organizacao, areas tematicas, publico alvo |
+| Oportunidade | Edital, desafio ou programa (vinculado a Organizador) | Tipo, datas, apoio oferecido, parceiros (JSONB) |
+| Resolvedor | Startup ou laboratorio | Tipo iniciativa, TRL, estagio negocio, apoio buscado |
+| Talento | Profissional individual | Skills, senioridade, tipo atuacao, dedicacao |
 
-### 3.1 JWT com RSA (Self-Signed)
+### 2.3 Decisoes Tecnicas Relevantes
 
-Utilizamos `spring-boot-starter-oauth2-resource-server` com chave RSA propria ao inves de um servidor OAuth externo. A API atua como emissor e validador de tokens. Tokens incluem `sub` (userId), `role` e `email` como claims.
+- **JWT com RSA (self-signed):** A API emite e valida tokens com chaves RSA proprias. Simplicidade para MVP sem dependencia externa (Keycloak/Auth0), com migracao futura possivel alterando apenas configuracao.
+- **Soft Delete:** Registros nunca sao removidos fisicamente — preserva dados para auditoria e conformidade LGPD.
+- **TAGs derivadas:** Geradas automaticamente pelo `TagService` a partir de campos classificatorios (tipo, area tematica, estagio, etc.), normalizadas em lowercase sem acentos. Preparacao para o Matching Maker.
+- **JPA Specifications:** Filtros dinamicos compostos nativos do Spring Data, sem QueryDSL.
+- **ElementCollection:** Enums em tabelas de juncao para queries tipadas com `cb.isMember()`. JSONB reservado para dados flexiveis nao filtraveis (parceiros, anexos).
 
-**Motivacao:** Simplicidade para MVP. Nao requer infraestrutura adicional (Keycloak, Auth0). A migracao para OAuth2 externo e possivel no futuro sem alterar os controllers (apenas configuracao do Resource Server).
+### 2.4 Seguranca
 
-### 3.2 Soft Delete
+Quatro perfis de acesso: **ADMIN** (acesso total), **ORGANIZADOR** (CRUD seus registros + oportunidades), **RESOLVEDOR** e **TALENTO** (CRUD do proprio perfil). Endpoints de escrita usam `@PreAuthorize` e verificacao de ownership. Medidas implementadas apos testes de penetracao:
 
-Todos os registros possuem campos `deleted` (boolean) e `deleted_at` (timestamp). O DELETE logico preserva dados para auditoria e compliance (LGPD). Todas as queries filtram `deleted = false` via JPA Specifications.
+- Rate limiting no login (5 tentativas/5 min por email)
+- Bloqueio de registro com role ADMIN pela API
+- Sanitizacao XSS em todas as strings de entrada (Jackson deserializer)
+- Limite de payload de 1MB
+- Tratamento seguro de erros (sem stack traces, tipo info ou campos do schema em respostas de erro)
+- Senhas com BCrypt fator 12; tokens JWT com expiracao de 24h
+- `userId` omitido da resposta de login (prevencao IDOR)
 
-**Motivacao:** Reversibilidade de operacoes, rastreabilidade para auditoria, conformidade com boas praticas de retencao de dados.
+### 2.5 Validacoes
 
-### 3.3 TAGs Derivadas
+Bean Validation (`@NotBlank`, `@Size`, `@Email`) em todos os campos criticos, alem de validadores customizados: CNPJ (modulo-11), `@MaxCollectionSize(3)` para colecoes de enums, `@ValidDateOrder` (data limite >= abertura), `@ValidParceria` e `@ValidVinculo` (campos condicionais).
 
-As TAGs sao campos desnormalizados gerados automaticamente a partir dos campos classificatorios de cada entidade (tipo, area tematica, estagio, etc.). Sao recalculadas em cada create/update, nunca editadas manualmente.
+---
 
-**Motivacao:** Facilita o Matching Maker futuro. Permite filtrar entidades por qualquer combinacao de classificacoes sem queries complexas. A normalizacao (lowercase, sem acentos) garante consistencia na busca.
-
-| Entidade | Campos fonte das TAGs |
-|----------|----------------------|
-| Oportunidade | tipo_oportunidade, areas_tematicas, apoio_oferecido |
-| Organizador | tipo_organizacao, area_tematica, estagio_inovacao, o_que_busca |
-| Resolvedor | tipo_iniciativa, area_tematica, trl_grupo, estagio_negocio, apoio_buscado |
-| Talento | skills, senioridade, areas_tematicas, tipo_atuacao |
-
-### 3.4 JPA Specifications para Filtros
-
-Utilizamos `JpaSpecificationExecutor` ao inves de QueryDSL para composicao de filtros. Cada filtro nulo e ignorado (retorna `null`, que o Spring Data descarta), permitindo combinacao livre.
-
-**Motivacao:** Nativo do Spring Data (sem dependencia adicional), composavel, testavel, sem geracao de codigo.
-
-### 3.5 ElementCollection para Arrays de Enums
-
-Arrays como `areas_tematicas`, `publico_alvo` e `apoio_buscado` sao armazenados em tabelas de juncao via `@ElementCollection`. Isso permite queries com `cb.isMember()` para filtragem eficiente por TAG.
-
-**Motivacao:** Alternativa ao JSONB que permite queries tipadas. Maximo de 3 itens por campo garante tabelas compactas. `FetchType.EAGER` e aceitavel dado o tamanho pequeno das colecoes.
-
-### 3.6 JSONB para Dados Flexiveis
-
-Campos como `parceiros` e `anexos` usam PostgreSQL JSONB via Hypersistence Utils. Esses campos nao sao filtrados e possuem estrutura variavel.
-
-**Motivacao:** Flexibilidade para dados semi-estruturados sem necessidade de tabelas adicionais. Compativel com PostgreSQL nativo.
-
-## 4. Seguranca
-
-### 4.1 Perfis e Permissoes
-
-| Perfil | Permissao |
-|--------|-----------|
-| ADMIN | Acesso total a todos os recursos |
-| ORGANIZADOR | CRUD dos seus Organizadores e Oportunidades |
-| RESOLVEDOR | CRUD do seu perfil de Resolvedor |
-| TALENTO | CRUD do seu perfil de Talento |
-
-### 4.2 Implementacao
-
-- `@PreAuthorize` em todos os endpoints de escrita (POST/PUT/DELETE)
-- `OwnershipChecker` bean que valida se o usuario autenticado e dono do recurso
-- Endpoints de leitura (GET) sao publicos para usuarios autenticados
-- Endpoints de autenticacao (`/api/v1/auth/**`) sao publicos
-
-### 4.3 Conformidade LGPD
-
-- Soft delete preserva dados sem exposicao publica
-- Auditoria (created_by, created_at, updated_at) em todas as entidades
-- Senhas armazenadas com BCrypt (fator 12)
-- Tokens JWT com expiracao de 24 horas
-
-## 5. Validacoes
-
-- Campos obrigatorios: `@NotBlank`, `@NotNull`, `@NotEmpty`
-- Tamanho: `@Size(max=150)` para titulo, `@Size(max=600)` para resumo, `@Size(max=500)` para mini_bio
-- CNPJ: Validador customizado com algoritmo modulo-11
-- Colecoes: `@MaxCollectionSize(3)` para areas tematicas, publico alvo, apoio buscado
-- Datas: `@ValidDateOrder` garante data_limite_inscricao >= data_abertura
-- Condicionais: `@ValidParceria` (parceiros obrigatorios quando possui_parceria=true), `@ValidVinculo` (detalhes obrigatorios quando possui_vinculo=true)
-- Email: `@Email` em todos os campos de email
-
-## 6. Premissas e Limitacoes
+## 3. Premissas e Limitacoes
 
 ### Premissas
-- Um usuario possui apenas um perfil (Role unica)
-- Cada Organizador/Resolvedor/Talento esta vinculado a um Usuario
-- TAGs sao somente leitura (derivadas, nao editaveis pela API)
-- O admin seed possui senha `admin123` (deve ser alterada em producao)
+
+- Cada usuario possui uma unica role. Cada entidade (Organizador/Resolvedor/Talento) esta vinculada a um usuario.
+- TAGs sao somente leitura, derivadas automaticamente. O backend e API-first (sem views).
+- Credenciais de seed (`admin123`, `123456`) e chaves RSA do repositorio sao para desenvolvimento — devem ser substituidas em producao.
 
 ### Limitacoes
-- Upload de arquivos (imagens, anexos) nao implementado - apenas URLs
-- Busca full-text e basica (LIKE) - pode ser otimizada com pg_trgm ou Elasticsearch
-- Sem rate limiting ou throttling
-- Sem cache (pode adicionar Spring Cache + Redis)
-- Matching Maker nao implementado (apenas TAGs preparatorias)
 
-## 7. Proximos Passos
+| Limitacao | Mitigacao Planejada |
+|-----------|---------------------|
+| Upload de arquivos nao implementado (apenas URLs) | Integracao com S3/MinIO |
+| Busca textual basica (LIKE) | PostgreSQL `pg_trgm` ou Elasticsearch |
+| Matching Maker nao implementado (apenas TAGs preparatorias) | Proximo passo prioritario |
+| Sem cache (todas as queries vao ao banco) | Spring Cache + Redis |
+| Rate limiting em memoria (nao compartilhado entre instancias) | Migrar para Redis |
+| Sem refresh token (requer novo login a cada 24h) | Fluxo de refresh token com rotacao |
 
-1. **Matching Maker** - Algoritmo de correspondencia baseado nas TAGs e classificacoes
-2. **Upload de arquivos** - Integracao com S3/MinIO para imagens e anexos
-3. **Notificacoes** - Sistema de alertas para novas oportunidades compatíveis
-4. **Cache** - Redis para queries frequentes e sessoes
-5. **Busca avancada** - PostgreSQL full-text search ou Elasticsearch
-6. **CI/CD** - Pipeline GitHub Actions com testes automatizados
-7. **Monitoramento** - Spring Actuator + Prometheus + Grafana
+---
 
-## 8. Como Executar
+## 4. Proximos Passos
 
-```bash
-# Com Docker
-docker-compose up --build
-
-# Sem Docker (requer PostgreSQL local)
-# Criar banco: CREATE DATABASE coreto; CREATE USER coreto WITH PASSWORD 'coreto123';
-./mvnw spring-boot:run
-
-# Testes
-./mvnw test
-```
-
-- API: http://localhost:8080
-- Swagger: http://localhost:8080/swagger-ui.html
-- Endpoints de auth sao publicos, demais requerem JWT Bearer token
+| Prioridade | Item | Descricao |
+|------------|------|-----------|
+| 1 | **Matching Maker** | Algoritmo de correspondencia baseado nas TAGs e classificacoes para sugerir oportunidades a resolvedores/talentos e vice-versa |
+| 2 | **Upload de arquivos** | S3/MinIO para imagens de perfil, logos e anexos de oportunidades |
+| 3 | **Notificacoes** | Alertas por email/push para novas oportunidades compativeis com o perfil |
+| 4 | **Busca avancada** | Full-text search com relevancia, sinonimos e tolerancia a erros |
+| 5 | **Cache + Redis** | Reduzir carga no banco para listagens frequentes |
+| 6 | **CI/CD** | GitHub Actions com testes, analise de codigo e deploy automatico |
+| 7 | **Monitoramento** | Actuator + Prometheus + Grafana para metricas e alertas |
